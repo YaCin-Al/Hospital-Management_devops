@@ -43,7 +43,7 @@ jobs:
       - name: ⚙️ Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'      # ← CHANGED from 18 to 20
           cache: 'npm'
           cache-dependency-path: Frontend/package-lock.json
 
@@ -74,7 +74,7 @@ jobs:
       - name: ⚙️ Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'      # ← CHANGED to 20 for consistency
           cache: 'npm'
           cache-dependency-path: Frontend/package-lock.json
 
