@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -23,7 +24,6 @@ vi.mock('axios', () => ({
   },
 }));
 
-/** Default resolved values restored before every test that calls clearAllMocks */
 const resetAxiosMocks = () => {
   axios.get.mockResolvedValue({
     data: {
@@ -48,7 +48,6 @@ const AppWrapper = ({ children, useRouter = true }) => {
       {children}
     </LoginContext.Provider>
   );
-
   return useRouter ? <BrowserRouter>{content}</BrowserRouter> : content;
 };
 
@@ -59,7 +58,6 @@ const AppWrapperLoggedIn = ({ children, useRouter = true }) => {
       {children}
     </LoginContext.Provider>
   );
-
   return useRouter ? <BrowserRouter>{content}</BrowserRouter> : content;
 };
 
@@ -80,7 +78,6 @@ describe('Hospital Management System', () => {
 
     it('renders email field, password field and submit button', () => {
       render(<AppWrapper><Login /></AppWrapper>);
-
       expect(screen.getByPlaceholderText(/youremail@example\.com/i)).toBeInTheDocument();
       expect(screen.getByPlaceholderText(/••••••••/i)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
@@ -89,7 +86,6 @@ describe('Hospital Management System', () => {
     it('updates email field as user types', async () => {
       const user = userEvent.setup();
       render(<AppWrapper><Login /></AppWrapper>);
-
       const emailInput = screen.getByPlaceholderText(/youremail@example\.com/i);
       await user.type(emailInput, 'doctor@hospital.com');
       expect(emailInput.value).toBe('doctor@hospital.com');
@@ -98,7 +94,6 @@ describe('Hospital Management System', () => {
     it('updates password field as user types', async () => {
       const user = userEvent.setup();
       render(<AppWrapper><Login /></AppWrapper>);
-
       const passwordInput = screen.getByPlaceholderText(/••••••••/i);
       await user.type(passwordInput, 'securePassword123');
       expect(passwordInput.value).toBe('securePassword123');
@@ -117,14 +112,11 @@ describe('Hospital Management System', () => {
     it('clears form fields after submission', async () => {
       const user = userEvent.setup();
       render(<AppWrapper><Login /></AppWrapper>);
-
       const emailInput    = screen.getByPlaceholderText(/youremail@example\.com/i);
       const passwordInput = screen.getByPlaceholderText(/••••••••/i);
-
       await user.type(emailInput, 'admin@hospital.com');
       await user.type(passwordInput, 'Password123');
       await user.click(screen.getByRole('button', { name: /login/i }));
-
       await waitFor(() => {
         expect(emailInput.value).toBe('');
         expect(passwordInput.value).toBe('');
@@ -240,7 +232,6 @@ describe('Hospital Management System', () => {
     it('search input accepts user input', async () => {
       const user = userEvent.setup();
       render(<AppWrapper><Patients /></AppWrapper>);
-
       const searchInputs = screen.queryAllByPlaceholderText(/search/i);
       if (searchInputs.length > 0) {
         await user.type(searchInputs[0], 'John');
@@ -251,7 +242,6 @@ describe('Hospital Management System', () => {
     it('still renders seeded patients after an API error', async () => {
       axios.get.mockRejectedValue(new Error('Network error'));
       render(<AppWrapper><Patients /></AppWrapper>);
-      // Component should fall back to local/seeded data
       expect(screen.getByText(/John Doe/i)).toBeInTheDocument();
     });
   });
@@ -340,7 +330,6 @@ describe('Hospital Management System', () => {
         );
       };
       render(<AppWrapper><TestComponent /></AppWrapper>);
-
       expect(screen.getByText(/Logged Out/i)).toBeInTheDocument();
       await user.click(screen.getByRole('button', { name: /toggle/i }));
       await waitFor(() =>
