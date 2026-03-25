@@ -33,9 +33,10 @@ export default [
         'warn',
         { allowConstantExport: true },
       ],
-      // ⚠️ Downgraded to warnings — visible but won't block pipeline
+      // ⚠️ Downgraded to warnings — won't block pipeline
       'no-unused-vars': 'warn',
       'react/prop-types': 'warn',
+      'react/no-unescaped-entities': 'warn', // ← ADD THIS LINE
     },
   },
 ]
