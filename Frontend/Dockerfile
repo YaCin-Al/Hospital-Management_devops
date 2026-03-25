@@ -7,6 +7,11 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
+
+# Stage 1.5 — Run tests (CI/CD Pipeline)
+RUN npm run test -- --run
+
+# Stage 1.6 — Build application
 RUN npm run build
 
 # Stage 2 — Serve with Nginx

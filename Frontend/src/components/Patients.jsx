@@ -10,14 +10,14 @@ const Patients = () => {
       name: "John Doe",
       age: 35,
       gender: "Male",
-      contact: "123-456-7890",
+      mobile: "123-456-7890",
     },
     {
       id: 2,
       name: "Jane Smith",
       age: 28,
       gender: "Female",
-      contact: "987-654-3210",
+      mobile: "987-654-3210",
     },
   ]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -186,7 +186,7 @@ const Patients = () => {
               name="mobile"
               placeholder="Contact Number"
               className="p-2 border border-gray-300 rounded"
-              value={newPatient.contact}
+              value={newPatient.mobile}
               onChange={handleInputChange}
               required
             />
@@ -216,7 +216,7 @@ const Patients = () => {
               </h3>
               <p className="text-gray-600 mb-1">Age: {patient.age}</p>
               <p className="text-gray-600 mb-1">Gender: {patient.gender}</p>
-              <p className="text-gray-600 mb-4">Contact: {patient.mobile}</p>
+              <p className="text-gray-600 mb-4">Contact: {patient.mobile || patient.contact}</p>
               <div className="flex justify-end">
                 <button className="text-blue-500 mr-2">
                   <FaEdit />
