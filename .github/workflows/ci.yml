@@ -8,73 +8,57 @@ on:
 
 jobs:
 
-  # ─── JOB 1: Lint ───────────────────────────────
   lint:
     name: 🧹 Lint & Code Quality
     runs-on: ubuntu-latest
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: ⚙️ Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
           cache-dependency-path: Frontend/package-lock.json
-
       - name: 📦 Install dependencies
         working-directory: Frontend
         run: npm install
-
       - name: 🧹 Run ESLint
         working-directory: Frontend
         run: npm run lint
 
-  # ─── JOB 2: Tests ──────────────────────────────
   test:
     name: 🧪 Healthcare Unit Tests
     runs-on: ubuntu-latest
     needs: lint
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: ⚙️ Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'      # ← CHANGED from 18 to 20
+          node-version: '20'
           cache: 'npm'
           cache-dependency-path: Frontend/package-lock.json
-
       - name: 📦 Install dependencies
         working-directory: Frontend
         run: npm install
-
       - name: 🧪 Run tests
         working-directory: Frontend
         run: npm test
-
-      - name: 📊 Upload test results
+      - name: 📤 Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: Frontend/test-results/
 
-  # ─── JOB 3: Build ──────────────────────────────
-  build:
-    name: 🏗️ Build App
+  security-report:
+    name: 📊 Vulnerability Report (DevOps)
     runs-on: ubuntu-latest
     needs: test
+    continue-on-error: true
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: ⚙️ Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: '20'      # ← CHANGED to 20 for consistency
+          node-version: '20'
           cache: 'npm'
           cache-dependency-path: Frontend/package-lock.json
 
@@ -82,32 +66,79 @@ jobs:
         working-directory: Frontend
         run: npm install
 
+      - name: 🔍 NPM Audit — CVE scan
+        working-directory: Frontend
+        run: |
+          echo "====== NPM AUDIT REPORT ======"
+          npm audit --audit-level=none || true
+
+      - name: 📦 Outdated packages
+        working-directory: Frontend
+        run: |
+          echo "====== OUTDATED PACKAGES ======"
+          npm outdated || true
+
+      - name: 🐳 Install Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: 🔍 Trivy filesystem scan
+        run: |
+          echo "====== TRIVY FILESYSTEM SCAN ======"
+          trivy fs ./Frontend --severity LOW,MEDIUM,HIGH,CRITICAL --format table || true
+
+      - name: 🔍 Trivy Docker image scan
+        run: |
+          echo "====== TRIVY IMAGE SCAN ======"
+          trivy image ${{ secrets.DOCKERHUB_USERNAME }}/healthnest-frontend:latest \
+            --severity LOW,MEDIUM,HIGH,CRITICAL \
+            --format table || true
+
+      - name: 📊 Save JSON report
+        working-directory: Frontend
+        run: npm audit --json > ../vulnerability-report.json || true
+
+      - name: 📤 Upload vulnerability report
+        uses: actions/upload-artifact@v4
+        with:
+          name: vulnerability-report-devops
+          path: vulnerability-report.json
+
+  build:
+    name: 🏗️ Build App
+    runs-on: ubuntu-latest
+    needs: security-report
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: Frontend/package-lock.json
+      - name: 📦 Install dependencies
+        working-directory: Frontend
+        run: npm install
       - name: 🔨 Build React app
         working-directory: Frontend
         run: npm run build
-
-      - name: ✅ Upload build artifact
+      - name: 📤 Upload build
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
           path: Frontend/dist
 
-  # ─── JOB 4: Docker ─────────────────────────────
   docker:
     name: 🐳 Build & Push Docker Image
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: 🔐 Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: 🏷️ Set up Docker metadata
+      - name: 🏷️ Metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -115,8 +146,7 @@ jobs:
           tags: |
             type=raw,value=latest
             type=sha,prefix=sha-
-
-      - name: 🐳 Build & Push Docker image
+      - name: 🐳 Build & Push
         uses: docker/build-push-action@v5
         with:
           context: ./Frontend
